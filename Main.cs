@@ -66,7 +66,7 @@ namespace ClampsBeGone
                         _clampList.Add(p);
                         foreach (PartModule pm in p.Modules)
                         {
-                            if (nonStockModules.Contains(pm.name))
+                            if (nonStockModules.Contains(pm.moduleName))
                                 _clampList.Add(p);
                         }
 
