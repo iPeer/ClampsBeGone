@@ -111,6 +111,7 @@ namespace ClampsBeGone
                         Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
                     }
                     v.Die/*InAFire*/();
+                    Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
                 }
 
                 this.clampList.Clear();
