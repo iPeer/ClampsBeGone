@@ -25,31 +25,15 @@ namespace ClampsBeGone
 
         public void onVesselSituationChange(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> data)
         {
-            PDebug.Log("Fired!");
             if (data.from == Vessel.Situations.PRELAUNCH)
             {
-                foreach (Vessel v in FlightGlobals.fetch.vessels)
-                {
-                    PDebug.Log(string.Format("{0} / {1}", v.name, v.parts.Count));
-                }
                 List<Vessel> clampVessels = FlightGlobals.fetch.vessels.FindAll(a => a.parts.Count == 1 && a.parts.First().Modules.OfType<LaunchClamp>().Any());
                 foreach (Vessel v in clampVessels)
                 {
-                    v.Die();
+                    v.Die/*InAFire*/();
                 }
             }
-            /*{
-                List<Part> launchClamps = active.parts.FindAll(a => a.Modules.OfType<LaunchClamp>().Any());
-                foreach (Part clamp in launchClamps)
-                    clamp.Die();
-            }*/
-
         }
-
-        /*public void Destroy()
-        {
-            GameEvents.onVesselSituationChange.Remove(onVesselSituationChange);
-        }*/
 
     }
 }
