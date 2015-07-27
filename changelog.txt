@@ -1,2 +1,8 @@
-﻿27/07/15, v1.0:
+﻿??, v1.1:
+	* Added KSP-AVC support
+	* No longer requires launch clamps to be single-part vessels.
+	* Will refund the cost of clamps (and any part attached to them) in Career saves.
+	* Support for non-stock LaunchClamp modules (see https://github.com/iPeer/ClampsBeGone/wiki/Adding-Mod-Modules)
+
+27/07/15, v1.0:
 	* Initial release
