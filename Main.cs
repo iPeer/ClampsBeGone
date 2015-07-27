@@ -99,10 +99,15 @@ namespace ClampsBeGone
                 {
                     if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                     {
-                        float cost = 0f;
-                        foreach (Part p in v.parts)
-                            cost += p.partInfo.cost;
-                        Log(String.Format("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s)", cost, v.parts.Count));
+                        float cost = 0f, fuel = 0f, dry = 0f;
+                        foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                        {
+                            float o1, o2;
+                            cost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out o1, out o2);
+                            fuel += o2;
+                            dry += o1;
+                        }
+                        Log(String.Format("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s). Dry: {2:N2}, Fuel: {3:N2}", cost, v.parts.Count, dry, fuel));
                         Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
                     }
                     v.Die/*InAFire*/();
