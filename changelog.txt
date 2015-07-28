@@ -1,5 +1,5 @@
 ﻿28/07/15, v1.1.1:
-	* [#1] Fixed an issue wherre certain mod clamps were being removed before a vessel was launched, causing the game to nullref, catastrophically in some cases.
+	* [#1] Fixed an issue where certain mod clamps were being removed before a vessel was launched, causing the game to nullref, catastrophically in some cases.
 
 28/07/15, v1.1:
 	* Added KSP-AVC support
