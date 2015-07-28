@@ -13,7 +13,7 @@ namespace ClampsBeGone
     {
 
         private bool registered = false;
-        private List<String> nonStockModules = new List<String>{ "iPeerNonStockLaunchClampTester" /* Tester*/, "ExtendingLaunchClamp" /* EPL */ };
+        private List<String> nonStockModules = new List<String> { "iPeerNonStockLaunchClampTester" /* Tester*/, "ExtendingLaunchClamp" /* EPL */ };
         private List<Part> clampList = new List<Part>();
 
         public void Start()
@@ -52,7 +52,7 @@ namespace ClampsBeGone
             Log("Loaded {0} Mod module names from file", this.nonStockModules.Count);
         }
 
-        public void onFlightReady() // Not currently working
+        public void onFlightReady()
         {
             Vessel active = FlightGlobals.fetch.activeVessel;
             if (active.situation == Vessel.Situations.PRELAUNCH)
@@ -63,12 +63,14 @@ namespace ClampsBeGone
                 foreach (Part p in active.parts)
                 {
                     if (p.Modules.OfType<LaunchClamp>().Any()) // Stock
-                        _clampList.Add(p);
-                        foreach (PartModule pm in p.Modules)
-                        {
-                            if (nonStockModules.Contains(pm.moduleName))
+                        if (!_clampList.Contains(p))
+                            _clampList.Add(p);
+                    foreach (PartModule pm in p.Modules) // Not stock
+                    {
+                        if (nonStockModules.Contains(pm.moduleName))
+                            if (!_clampList.Contains(p))
                                 _clampList.Add(p);
-                        }
+                    }
 
                 }
                 Log(String.Format("{0} clamp(s) on this vessel", _clampList.Count));
@@ -82,19 +84,19 @@ namespace ClampsBeGone
             {
                 List<Vessel> vessels = new List<Vessel>();
 
-                // So many loops!
                 foreach (Part p in this.clampList)
                 {
                     uint fID = p.flightID;
                     foreach (Vessel v in FlightGlobals.fetch.vessels)
                     {
                         if (v.parts.Any(a => a.flightID == fID))
-                            vessels.Add(v);
+                            if (!vessels.Contains(v))
+                                vessels.Add(v);
                     }
                     //vessels.AddRange(FlightGlobals.fetch.vessels.FindAll(a => a.parts.All(b => b.flightID == fID)));
                 }
 
-               Log(String.Format("{0} vessel(s) to kill with fire", vessels.Count));
+                Log(String.Format("{0} vessel(s) to kill with fire", vessels.Count));
                 foreach (Vessel v in vessels)
                 {
                     if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
@@ -153,7 +155,7 @@ namespace ClampsBeGone
         private void Log(string msg, LogLevel level, params object[] fillers)
         {
 
-            string message = "[ClampsBeGone]: "+String.Format(msg, fillers);
+            string message = "[ClampsBeGone]: " + String.Format(msg, fillers);
 
             if (level == LogLevel.ERROR)
                 PDebug.Error(message);
