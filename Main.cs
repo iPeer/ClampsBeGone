@@ -15,6 +15,7 @@ namespace ClampsBeGone
         private bool registered = false;
         private List<String> nonStockModules = new List<String> { "iPeerNonStockLaunchClampTester" /* Tester*/, "ExtendingLaunchClamp" /* EPL */ };
         private List<Part> clampList = new List<Part>();
+        private bool hasLaunched = false;
 
         public void Start()
         {
@@ -80,22 +81,34 @@ namespace ClampsBeGone
 
         public void onVesselSituationChangeNew(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> data)
         {
-            if (data.from == Vessel.Situations.PRELAUNCH)
+
+            Log("Flight situation change: {0} -> {1}", data.from, data.to);
+
+            if (data.from == Vessel.Situations.PRELAUNCH || this.clampList.Count > 0)
             {
                 List<Vessel> vessels = new List<Vessel>();
+                List<Part> parts = new List<Part>(this.clampList);
 
-                foreach (Part p in this.clampList)
+                foreach (Part p in parts)
                 {
                     uint fID = p.flightID;
                     foreach (Vessel v in FlightGlobals.fetch.vessels)
                     {
                         if (v.parts.Any(a => a.flightID == fID))
+                        {
+                            if (v != FlightGlobals.fetch.activeVessel)
+                            {
+                                this.clampList.Remove(p);
+                            }
+                            else // Fix for FASA clamps?
+                                continue;
                             if (!vessels.Contains(v))
                                 vessels.Add(v);
+                        }
                     }
                     //vessels.AddRange(FlightGlobals.fetch.vessels.FindAll(a => a.parts.All(b => b.flightID == fID)));
                 }
-
+                if (vessels.Count == 0 ) { return; }
                 Log(String.Format("{0} vessel(s) to kill with fire", vessels.Count));
                 foreach (Vessel v in vessels)
                 {
@@ -116,7 +129,7 @@ namespace ClampsBeGone
                     Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
                 }
 
-                this.clampList.Clear();
+                //this.clampList.Clear();
                 vessels.Clear();
 
             }
