@@ -1,4 +1,7 @@
-﻿28/07/15, v1.1.1:
+﻿29/07/15, v1.1.2:
+	* [#2] Fixed an issue that caused FASA's umbilical towers to nullref when being refunded in career saves.
+
+28/07/15, v1.1.1:
 	* [#1] Fixed an issue where certain mod clamps were being removed before a vessel was launched, causing the game to nullref, catastrophically in some cases.
 
 28/07/15, v1.1:
