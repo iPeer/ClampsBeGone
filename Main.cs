@@ -112,18 +112,35 @@ namespace ClampsBeGone
                 Log(String.Format("{0} vessel(s) to kill with fire", vessels.Count));
                 foreach (Vessel v in vessels)
                 {
+                    //Log("Vessel == null? {0}", v == null);
                     if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
                     {
-                        float cost = 0f, fuel = 0f, dry = 0f;
-                        foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                        if (v.protoVessel != null)
                         {
-                            float o1, o2;
-                            cost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out o1, out o2);
-                            fuel += o2;
-                            dry += o1;
+                            float cost = 0f, fuel = 0f, dry = 0f;
+                            foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                            {
+                                //Log("Snapshot == null? {0}", pps == null);
+                                float o1, o2;
+                                cost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out o1, out o2);
+                                fuel += o2;
+                                dry += o1;
+                            }
+                            Log(String.Format("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s). Dry: {2:N2}, Fuel: {3:N2}", cost, v.parts.Count, dry, fuel));
+                            Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
                         }
-                        Log(String.Format("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s). Dry: {2:N2}, Fuel: {3:N2}", cost, v.parts.Count, dry, fuel));
-                        Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
+                        else
+                        {
+                            Log("Couldn't properly refund the player for clamp vessel with {0} part(s) because something went wrong acquiring the protoVessel.", LogLevel.ERROR, v.parts.Count);
+                            Log("Performing \"emergency\" unscaled refund of this vessel. Chanses are this will be nowhere near waht you paid for the parts (sorry - there's a reason this is a fallback :c).", LogLevel.ERROR);
+                            float cost = 0f;
+                            foreach (Part p in v.parts)
+                            {
+                                cost += p.partInfo.cost;
+                            }
+                            Log("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s).", cost, v.parts.Count);
+                            Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
+                        }
                     }
                     v.Die/*InAFire*/();
                     Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
