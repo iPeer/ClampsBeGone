@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Timers;
 using UnityEngine;
 
 namespace ClampsBeGone
@@ -17,6 +18,12 @@ namespace ClampsBeGone
         private List<Part> clampList = new List<Part>();
         private bool hasLaunched = false;
 
+        private bool useDelay = false;
+        private double deleteDelay = 10000d;
+        private bool isWaitingForTimer = false;
+
+        private Timer timer;
+
         public void Start()
         {
             // Startup
@@ -24,18 +31,21 @@ namespace ClampsBeGone
             {
                 GameEvents.onVesselSituationChange.Add(onVesselSituationChangeNew);
                 GameEvents.onFlightReady.Add(onFlightReady);
+                GameEvents.onGameSceneSwitchRequested.Add(onGameSceneSwitchRequested);
                 registered = true;
-                loadCustomModuleList();
+                loadSettings();
             }
         }
 
-        private void loadCustomModuleList()
+        private void loadSettings()
         {
             string config = Path.Combine(Path.GetDirectoryName(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath), "ClampsBeGone.cfg");
             if (!File.Exists(config))
             {
                 ConfigNode _new = new ConfigNode();
                 _new.AddValue("ModModuleNames", String.Join(",", nonStockModules.ToArray()));
+                _new.AddValue("useDelay", this.useDelay);
+                _new.AddValue("deleteDelay", this.deleteDelay);
                 _new.Save(config);
                 return;
             }
@@ -43,14 +53,28 @@ namespace ClampsBeGone
             if (!node.HasValue("ModModuleNames"))
             {
                 Log("ConfigNode does not have 'ModModuleNames' entry, aborting loading from file.", LogLevel.ERROR);
-                return;
             }
-            foreach (string n in node.GetValue("ModModuleNames").Split(','))
+            else
             {
-                if (!this.nonStockModules.Contains(n))
-                    this.nonStockModules.Add(n);
+                foreach (string n in node.GetValue("ModModuleNames").Split(','))
+                {
+                    if (!this.nonStockModules.Contains(n))
+                        this.nonStockModules.Add(n);
+                }
+                Log("Loaded {0} Mod module names from file", this.nonStockModules.Count);
             }
-            Log("Loaded {0} Mod module names from file", this.nonStockModules.Count);
+            if (node.HasValue("useDelay"))
+                this.useDelay = Convert.ToBoolean(node.GetValue("useDelay"));
+
+            if (node.HasValue("deleteDelay"))
+            {
+                try
+                {
+                    this.deleteDelay = Convert.ToDouble(node.GetValue("deleteDelay"));
+                }
+                catch { } // do nothing if it errors (as we already have a default set)
+            }
+
         }
 
         public void onFlightReady()
@@ -109,47 +133,92 @@ namespace ClampsBeGone
                     //vessels.AddRange(FlightGlobals.fetch.vessels.FindAll(a => a.parts.All(b => b.flightID == fID)));
                 }
                 if (vessels.Count == 0 ) { return; }
-                Log(String.Format("{0} vessel(s) to kill with fire", vessels.Count));
-                foreach (Vessel v in vessels)
+                if (this.useDelay)
                 {
-                    //Log("Vessel == null? {0}", v == null);
-                    if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
-                    {
-                        if (v.protoVessel != null)
-                        {
-                            float cost = 0f, fuel = 0f, dry = 0f;
-                            foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
-                            {
-                                //Log("Snapshot == null? {0}", pps == null);
-                                float o1, o2;
-                                cost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out o1, out o2);
-                                fuel += o2;
-                                dry += o1;
-                            }
-                            Log(String.Format("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s). Dry: {2:N2}, Fuel: {3:N2}", cost, v.parts.Count, dry, fuel));
-                            Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
-                        }
-                        else
-                        {
-                            Log("Couldn't properly refund the player for clamp vessel with {0} part(s) because something went wrong acquiring the protoVessel.", LogLevel.ERROR, v.parts.Count);
-                            Log("Performing \"emergency\" unscaled refund of this vessel. Chanses are this will be nowhere near waht you paid for the parts (sorry - there's a reason this is a fallback :c).", LogLevel.ERROR);
-                            float cost = 0f;
-                            foreach (Part p in v.parts)
-                            {
-                                cost += p.partInfo.cost;
-                            }
-                            Log("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s).", cost, v.parts.Count);
-                            Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
-                        }
-                    }
-                    v.Die/*InAFire*/();
-                    Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
+                    //if (this.isWaitingForTimer) { return; }
+                    this.isWaitingForTimer = true;
+
+                    Log("Delaying clamp deletion by {0:N0} seconds due to useDelay setting", this.deleteDelay / 1000d);
+
+                    this.timer = new Timer();
+                    this.timer.Interval = this.deleteDelay;
+                    this.timer.Elapsed += (sender, e) => removeVessels(vessels, true);
+                    this.timer.Enabled = true;
+
                 }
-
-                //this.clampList.Clear();
-                vessels.Clear();
-
+                else
+                {
+                    removeVessels(vessels);
+                }
             }
+        }
+
+        public void removeVessels(List<Vessel> vessels, bool fromTimer = false)
+        {
+            Log(String.Format("{0} vessel(s) to kill with fire", vessels.Count));
+            foreach (Vessel v in new List<Vessel>(vessels)) // new List so we can modify the underlying object while iterating over it
+            {
+                if (v.HoldPhysics)
+                {
+                    Log("Cannot run on vessel {0} ({1}) because it is on rails.", v.id, v.vesselName);
+                    if (fromTimer)
+                        vessels.Remove(v); // Only remove if we're using delay
+                    continue;
+                }
+                //Log("Vessel == null? {0}", v == null);
+                if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
+                {
+                    if (v.protoVessel != null)
+                    {
+                        float cost = 0f, fuel = 0f, dry = 0f;
+                        foreach (ProtoPartSnapshot pps in v.protoVessel.protoPartSnapshots)
+                        {
+                            //Log("Snapshot == null? {0}", pps == null);
+                            float o1, o2;
+                            cost += ShipConstruction.GetPartCosts(pps, pps.partInfo, out o1, out o2);
+                            fuel += o2;
+                            dry += o1;
+                        }
+                        Log(String.Format("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s). Dry: {2:N2}, Fuel: {3:N2}", cost, v.parts.Count, dry, fuel));
+                        Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
+                    }
+                    else
+                    {
+                        Log("Couldn't properly refund the player for clamp vessel with {0} part(s) because something went wrong acquiring the protoVessel.", LogLevel.ERROR, v.parts.Count);
+                        Log("Performing \"emergency\" unscaled refund of this vessel. Chances are this will be nowhere near waht you paid for the parts (sorry - there's a reason this is a fallback :c).", LogLevel.ERROR);
+                        float cost = 0f;
+                        foreach (Part p in v.parts)
+                        {
+                            cost += p.partInfo.cost;
+                        }
+                        Log("Refunding the player {0:N2} funds for clamp vessel with {1:N0} part(s).", cost, v.parts.Count);
+                        Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
+                    }
+                }
+                v.Die/*InAFire*/();
+                Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
+            }
+            //if (fromTimer)
+            //{
+                /*if (vessels.Count > 0)
+                {
+                    Log("Still {0} vessel(s) to remove.", vessels.Count);
+                }
+                else
+                {
+                    Log("No more vessels to remove, disabling & disposing of timer.");*/
+                    this.timer.Enabled = false;
+                    this.timer.Dispose();
+                    this.isWaitingForTimer = false;
+                //}
+            //}
+            //else
+            //{
+                vessels.Clear();
+            //}
+
+            //this.clampList.Clear();
+
         }
 
         public void onVesselSituationChange(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> data)
@@ -196,5 +265,21 @@ namespace ClampsBeGone
 
         }
 
+        public void Destroy()
+        {
+            if (this.timer != null)
+            {
+                this.timer.Enabled = false;
+                this.timer.Dispose();
+            }
+        }
+
+
+        private void onGameSceneSwitchRequested(GameEvents.FromToAction<GameScenes, GameScenes> data) 
+        {
+
+            Destroy();
+
+        }
     }
 }
