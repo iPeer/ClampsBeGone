@@ -20,9 +20,9 @@ namespace ClampsBeGone
 
         private bool useDelay = false;
         private double deleteDelay = 10000d;
-        private bool isWaitingForTimer = false;
+        //private bool isWaitingForTimer = false;
 
-        private Timer timer;
+        private LinkedList<Timer> timerList = new LinkedList<Timer>();
 
         public void Start()
         {
@@ -136,14 +136,16 @@ namespace ClampsBeGone
                 if (this.useDelay)
                 {
                     //if (this.isWaitingForTimer) { return; }
-                    this.isWaitingForTimer = true;
+                    //this.isWaitingForTimer = true;
 
                     Log("Delaying clamp deletion by {0:N0} seconds due to useDelay setting", this.deleteDelay / 1000d);
 
-                    this.timer = new Timer();
-                    this.timer.Interval = this.deleteDelay;
-                    this.timer.Elapsed += (sender, e) => removeVessels(vessels, true);
-                    this.timer.Enabled = true;
+                    Timer t = new Timer();
+                    t.Interval = this.deleteDelay;
+                    t.Elapsed += (sender, e) => onTimerElapsed(t, vessels);
+                    t.Enabled = true;
+                    //this.timerList.AddLast(t);
+                    addTimer(t);
 
                 }
                 else
@@ -161,8 +163,8 @@ namespace ClampsBeGone
                 if (v.HoldPhysics)
                 {
                     Log("Cannot run on vessel {0} ({1}) because it is on rails.", v.id, v.vesselName);
-                    if (fromTimer)
-                        vessels.Remove(v); // Only remove if we're using delay
+                    //if (fromTimer)
+                    //    vessels.Remove(v); // Only remove if we're using delay
                     continue;
                 }
                 //Log("Vessel == null? {0}", v == null);
@@ -198,6 +200,9 @@ namespace ClampsBeGone
                 v.Die/*InAFire*/();
                 Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
             }
+
+            // This bit of code is like a rebelious teenagers' bedroom! (The quotes are items of clothing!)
+
             //if (fromTimer)
             //{
                 /*if (vessels.Count > 0)
@@ -207,9 +212,9 @@ namespace ClampsBeGone
                 else
                 {
                     Log("No more vessels to remove, disabling & disposing of timer.");*/
-                    this.timer.Enabled = false;
-                    this.timer.Dispose();
-                    this.isWaitingForTimer = false;
+                    //this.timer.Enabled = false;
+                    //this.timer.Dispose();
+                    //this.isWaitingForTimer = false;
                 //}
             //}
             //else
@@ -219,6 +224,23 @@ namespace ClampsBeGone
 
             //this.clampList.Clear();
 
+        }
+
+        private void addTimer(Timer timer)
+        {
+            if (this.timerList.Contains(timer))
+                return;
+            this.timerList.AddLast(timer);
+            Log("Now {0} timer(s) running", this.timerList.Count);
+        }
+
+        private void onTimerElapsed(Timer t, List<Vessel> vessels)
+        {
+            removeVessels(vessels, true);
+            t.Enabled = false;
+            t.Stop(); // Sanity
+            this.timerList.Remove(t);
+            t.Dispose();
         }
 
         public void onVesselSituationChange(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> data)
@@ -267,10 +289,15 @@ namespace ClampsBeGone
 
         public void Destroy()
         {
-            if (this.timer != null)
+            if (this.timerList.Count > 0)
             {
-                this.timer.Enabled = false;
-                this.timer.Dispose();
+                Log("{0} timer(s) to destroy", this.timerList.Count);
+                foreach (Timer t in this.timerList) 
+                {
+                    t.Enabled = false;
+                    t.Stop(); //Sanity
+                    t.Dispose();
+                }
             }
         }
 
