@@ -45,13 +45,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GUI\GUIManager.cs" />
+    <Compile Include="Logging\Logger.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Config\Settings.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="changelog.txt" />
     <None Include="LICENSE.md" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "C:\KSPScratchPad\GameData\iPeer\ClampsBeGone\" /y /f
