@@ -287,7 +287,7 @@ namespace ClampsBeGone
 
         }
 
-        public void Destroy()
+        public void OnDestroy()
         {
             if (this.timerList.Count > 0)
             {
@@ -305,7 +305,7 @@ namespace ClampsBeGone
         private void onGameSceneSwitchRequested(GameEvents.FromToAction<GameScenes, GameScenes> data) 
         {
 
-            Destroy();
+            OnDestroy();
 
         }
     }
