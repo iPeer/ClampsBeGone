@@ -21,11 +21,12 @@ namespace ClampsBeGone
             this.configPath = path;
 
             this.SETTINGS_MAP = new Dictionary<string, object> {
-                {"ModModuleNames", "iPeerNonStockLaunchClampTester,ExtendingLaunchClamp"},
+                {"ModModuleNames", "ExtendingLaunchClamp"},
                 {"UseDelay", false},
                 {"DeleteDelay", 10000d},
                 {"GUIPosX", 0},
-                {"GUIPosY", 0}
+                {"GUIPosY", 0},
+                {"UseExplosions", false}
             };
 
         }
@@ -124,8 +125,8 @@ namespace ClampsBeGone
             foreach (string s in this.SETTINGS_MAP.Keys)
                 node.AddValue(s, this.SETTINGS_MAP[s]);
             node.Save(this.configPath);
-            if (get<bool>("LogNodeSaving"))
-                Logger.Log("{0}", node.ToString());
+            /*if (get<bool>("LogNodeSaving"))
+                Logger.Log("{0}", node.ToString());*/
             Logger.Log("Done saving settings!");
 
         }

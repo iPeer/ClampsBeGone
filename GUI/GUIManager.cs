@@ -20,6 +20,7 @@ namespace ClampsBeGone
         private string nonStockModules = "";
         private double deleteDelay = 10d;
         private bool useDelay = false;
+        private bool useExplosions = false;
 
         private bool hasInitStyles = false;
 
@@ -67,6 +68,7 @@ namespace ClampsBeGone
                 this.nonStockModules = Main.Settings.get<string>("ModModuleNames");
                 this.deleteDelay = Main.Settings.get<double>("DeleteDelay") / 1000d;
                 this.useDelay = Main.Settings.get<bool>("UseDelay");
+                this.useExplosions = Main.Settings.get<bool>("UseExplosions");
                 _windowPos.x = Main.Settings.get<float>("GUIPosX");
                 _windowPos.y = Main.Settings.get<float>("GUIPosY");
                 RenderingManager.AddToPostDrawQueue(windowID, OnGUI);
@@ -135,6 +137,7 @@ namespace ClampsBeGone
                 }
                 GUILayout.EndVertical();
                 GUILayout.Space(10f);
+                this.useExplosions = GUILayout.Toggle(this.useExplosions, "Explosive ordnance mode", _toggleStyle); // Previously in ClampsBeGone testing: http://ipeer.auron.co.uk/KpifS.png
                 this.useDelay = GUILayout.Toggle(this.useDelay, "Delay removal of launch clamps", _toggleStyle);
                 GUILayout.Space(10f);
                 GUILayout.BeginVertical();
@@ -157,6 +160,7 @@ namespace ClampsBeGone
                     Main.Instance.nonStockModules = this.nonStockModules.Split(',').ToList();
                     Main.Settings.set("UseDelay", this.useDelay);
                     Main.Settings.set("DeleteDelay", Math.Round(this.deleteDelay) * 1000d);
+                    Main.Settings.set("UseExplosions", this.useExplosions);
                     Main.Settings.save();
                     toggleGUI();
                 }

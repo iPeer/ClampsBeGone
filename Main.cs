@@ -17,7 +17,7 @@ namespace ClampsBeGone
         private bool registered = false;
         private List<Part> clampList = new List<Part>();
 
-        public List<String> nonStockModules = new List<String> { "iPeerNonStockLaunchClampTester" /* Tester*/, "ExtendingLaunchClamp" /* EPL */ };
+        public List<String> nonStockModules = new List<String> { "ExtendingLaunchClamp" /* EPL */ };
         public static Main Instance { get; protected set; }
         public static Settings Settings { get; protected set; }
         public static GUIManager GUIManager { get; protected set; }
@@ -44,6 +44,8 @@ namespace ClampsBeGone
                 {
                     foreach (string n in Settings.get<string>("ModModuleNames").Split(','))
                     {
+                        if (n.Equals("iPeerNonStockLaunchClampTester")) // We don't need this any more
+                            continue;
                         if (!this.nonStockModules.Contains(n))
                             this.nonStockModules.Add(n);
                     }
@@ -183,7 +185,7 @@ namespace ClampsBeGone
                     else
                     {
                         Logger.Log("Couldn't properly refund the player for clamp vessel with {0} part(s) because something went wrong acquiring the protoVessel.", LogLevel.ERROR, v.parts.Count);
-                        Logger.Log("Performing \"emergency\" unscaled refund of this vessel. Chances are this will be nowhere near waht you paid for the parts (sorry - there's a reason this is a fallback :c).", LogLevel.ERROR);
+                        Logger.Log("Performing \"emergency\" unscaled refund of this vessel. Chances are this will be nowhere near what you paid for the parts (sorry - there's a reason this is a fallback :c).", LogLevel.ERROR);
                         float cost = 0f;
                         foreach (Part p in v.parts)
                         {
@@ -193,7 +195,13 @@ namespace ClampsBeGone
                         Funding.Instance.AddFunds(cost, TransactionReasons.VesselRecovery);
                     }
                 }
-                v.Die/*InAFire*/();
+                if (Settings.get<bool>("UseExplosions"))
+                {
+                    Logger.Log("Vessel '{1}' has {0} part(s) to explode", v.parts.Count, v.vesselName);
+                    StartCoroutine(BlowUpEVERYTHING(v));
+                }
+                else
+                    v.Die/*InAFire*/();
                 Destroy(v); // Probably the equivalent of stamping on a bug after you hit it with a newspaper.
             }
 
@@ -220,6 +228,24 @@ namespace ClampsBeGone
 
             //this.clampList.Clear();
 
+        }
+
+        private IEnumerator<WaitForSeconds> BlowUpEVERYTHING/*!*/(Vessel v)
+        {
+            while (v.parts.Count > 0)
+            {
+                // Based on code from TAC Self Destruct
+                Part part = v.parts.Find(p => p != v.rootPart && !p.children.Any());
+                if (part != null)
+                {
+                    part.explode();
+                }
+                else
+                {
+                    v.parts.ForEach(p => p.explode());
+                }
+                yield return new WaitForSeconds(0.1f);
+            }
         }
 
         private void addTimer(Timer timer)

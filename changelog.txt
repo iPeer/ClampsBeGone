@@ -1,6 +1,7 @@
 ﻿??, v1.2:
 	* Added an option to delay removal of launch clamps (default: OFF). Delay can range from 1 second to 2 minutes (default: 10s).
 	* Added an options GUI to help configuration.
+	* Added an option to have clamps explode instead of being deleted (default: OFF).
 	* [#3] Vessels will no longer vaporise when EVAing Kerbals while in a PRELAUNCH state.
 
 29/07/15, v1.1.2:
