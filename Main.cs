@@ -102,6 +102,7 @@ namespace ClampsBeGone
         public void onVesselSituationChangeNew(GameEvents.HostedFromToAction<Vessel, Vessel.Situations> data)
         {
 
+            if (TimeWarp.CurrentRate > 1f && TimeWarp.WarpMode != TimeWarp.Modes.LOW) { return; } // Do not run while on-rails timewarping.
             Logger.Log("Flight situation change: {0} -> {1}", data.from, data.to);
 
             if (FlightGlobals.fetch.activeVessel.isEVA || this.ignoreSituationChanges) { return; }
