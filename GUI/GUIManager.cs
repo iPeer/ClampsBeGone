@@ -122,7 +122,7 @@ namespace ClampsBeGone
             _windowPos.y = Mathf.Clamp(_windowPos.y, 0f, Screen.height - _windowPos.height);
 
 
-            _windowPos = GUILayout.Window(windowID, _windowPos, OnWindow, "ClampsBeGone Config", _windowStyle, GUILayout.MinHeight(200f), GUILayout.MinWidth(360f));
+            _windowPos = GUILayout.Window(windowID, _windowPos, OnWindow, "ClampsBeGone Config", _windowStyle, GUILayout.MinHeight(200f), GUILayout.MinWidth(360f), GUILayout.MaxWidth(360f));
 
         }
 
@@ -133,7 +133,7 @@ namespace ClampsBeGone
                 GUILayout.BeginVertical();
                 {
                     GUILayout.Label("Custom clamp modules (separate using commas):", _labelStyle);
-                    this.nonStockModules = GUILayout.TextField(this.nonStockModules, _textBoxStyle, GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false));
+                    this.nonStockModules = GUILayout.TextField(this.nonStockModules, _textBoxStyle, GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(true));
                 }
                 GUILayout.EndVertical();
                 GUILayout.Space(10f);
@@ -168,6 +168,12 @@ namespace ClampsBeGone
                 if (GUILayout.Button("Close", _buttonStyle))
                 {
                     toggleGUI();
+                }
+
+                if (GUILayout.Button("Dump size info", _buttonStyle))
+                {
+                    Logger.Log("{0}", _windowPos);
+                    Logger.Log("W: {0}, H: {1}", _windowPos.width, _windowPos.height);
                 }
 
             }

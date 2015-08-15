@@ -242,9 +242,21 @@ namespace ClampsBeGone
                 }
                 else
                 {
-                    v.parts.ForEach(p => p.explode());
+                    v.parts.ForEach(p => tryExplode(p));
                 }
                 yield return new WaitForSeconds(0.1f);
+            }
+        }
+
+        private void tryExplode(Part p)
+        {
+            try
+            {
+                p.explode();
+            }
+            catch
+            {
+                p.Die();
             }
         }
 
