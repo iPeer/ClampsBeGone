@@ -3,6 +3,7 @@
 	* Added an options GUI to help configuration.
 	* Added an option to have clamps explode instead of being deleted (default: OFF).
 	* [#3] Vessels will no longer vaporise when EVAing Kerbals while in a PRELAUNCH state.
+	* ClampsBeGone will no longer run while the player is using non-physical timewarp.
 
 29/07/15, v1.1.2:
 	* [#2] Fixed an issue that caused FASA's umbilical towers to nullref when being refunded in career saves.
