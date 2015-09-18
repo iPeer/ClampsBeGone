@@ -24,17 +24,20 @@ namespace ClampsBeGone
 
         private bool hasInitStyles = false;
 
+        private string[] toolbarSettings = new string[]{"Off", "Stock", "Blizzy"};
+        private int toolbarOption = 1; //                 0       1         2
+
         GUIStyle _windowStyle, _labelStyle, _textBoxStyle, _buttonStyle, _sliderStyle, _sliderThumbStyle, _toggleStyle;
 
         public GUIManager()
         {
-            if (ApplicationLauncher.Ready)
+            /*if (ApplicationLauncher.Ready)
                 onGUIApplicationLauncherReady();
             else
-                GameEvents.onGUIApplicationLauncherReady.Add(onGUIApplicationLauncherReady);
+                GameEvents.onGUIApplicationLauncherReady.Add(onGUIApplicationLauncherReady);*/
         }
 
-        private void onGUIApplicationLauncherReady()
+        /*private void onGUIApplicationLauncherReady()
         {
             if (buttonAdded) { return; }
             GameEvents.onGUIApplicationLauncherReady.Remove(onGUIApplicationLauncherReady);
@@ -56,7 +59,7 @@ namespace ClampsBeGone
             if (!buttonAdded) { return; }
             ApplicationLauncher.Instance.RemoveModApplication(_button);
             buttonAdded = false;
-        }
+        }*/
 
         public void toggleGUI()
         {

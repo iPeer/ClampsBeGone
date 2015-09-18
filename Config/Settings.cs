@@ -26,7 +26,8 @@ namespace ClampsBeGone
                 {"DeleteDelay", 10000d},
                 {"GUIPosX", 0},
                 {"GUIPosY", 0},
-                {"UseExplosions", false}
+                {"UseExplosions", false},
+                {"ToolbarType", "STOCK"}
             };
 
         }
